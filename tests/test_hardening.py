@@ -592,3 +592,31 @@ def test_s3_sync_honours_cancel_event(monkeypatch):
     with pytest.raises(RunCancelled):
         _run_fake_s3_sync(monkeypatch, src, dst, {}, cancel_event=cancel)
     assert dst.uploaded == []
+
+
+@pytest.mark.parametrize("module_name", ["plugins.s3_to_s3", "plugins.db_to_s3", "plugins.file_to_s3"])
+def test_worker_s3_clients_do_not_send_expect_continue(module_name):
+    import importlib
+    import io
+
+    from botocore.awsrequest import AWSResponse
+
+    class _Raw:
+        def stream(self, **_):
+            yield b""
+
+    sent_headers = {}
+
+    def capture(request, **_):
+        sent_headers.update(request.headers)
+        return AWSResponse(request.url, 200, {"ETag": '"abc"'}, _Raw())
+
+    make_client = importlib.import_module(module_name)._make_s3_client
+    client = make_client("us-east-1", "https://s3.example.com", {"aws_access_key_id": "x", "aws_secret_access_key": "y"})
+    client.meta.events.register("before-send.s3", capture)
+
+    response = client.upload_part(Bucket="b", Key="k", UploadId="u", PartNumber=1, Body=io.BytesIO(b"data"))
+
+    assert response["ETag"] == '"abc"'
+    assert sent_headers
+    assert "Expect" not in sent_headers

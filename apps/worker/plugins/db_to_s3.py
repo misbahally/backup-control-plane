@@ -5,7 +5,7 @@ from typing import Any
 
 from boto3.s3.transfer import TransferConfig
 
-from plugins.s3_to_s3 import _normalise_encryption_config, _upload_extra_args
+from plugins.s3_to_s3 import _disable_expect_continue, _normalise_encryption_config, _upload_extra_args
 from secret_resolver import resolve_secret_mapping
 
 
@@ -24,7 +24,7 @@ def _make_s3_client(region: str, endpoint: str, creds: dict[str, str]) -> Any:
         kwargs["aws_secret_access_key"] = creds["aws_secret_access_key"]
     if creds.get("aws_session_token"):
         kwargs["aws_session_token"] = creds["aws_session_token"]
-    return boto3.client(**kwargs)
+    return _disable_expect_continue(boto3.client(**kwargs))
 
 
 def _normalise_engine_name(source: Any) -> str:

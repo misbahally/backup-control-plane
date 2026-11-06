@@ -141,6 +141,18 @@ def _upload_extra_args(encryption: dict[str, Any]) -> dict[str, Any]:
     return {}
 
 
+def _drop_expect_header(params: dict[str, Any], **_: Any) -> None:
+    params.get("headers", {}).pop("Expect", None)
+
+
+def _disable_expect_continue(client: Any) -> Any:
+    # botocore < 1.43.77 (boto/botocore#3755) can reuse a pooled connection's cached status after
+    # an early final response to "Expect: 100-continue" (e.g. Wasabi on a 0-byte PUT). The next
+    # response's headers are then lost, so multipart uploads fail with KeyError: 'ETag'.
+    client.meta.events.register_last("before-call.s3", _drop_expect_header)
+    return client
+
+
 def _make_s3_client(region: str, endpoint: str, creds: dict[str, str]) -> Any:
     kwargs: dict[str, Any] = {
         "service_name": "s3",
@@ -164,7 +176,7 @@ def _make_s3_client(region: str, endpoint: str, creds: dict[str, str]) -> Any:
         tcp_keepalive=True,
     )
 
-    return boto3.client(**kwargs)
+    return _disable_expect_continue(boto3.client(**kwargs))
 
 
 def _dest_key_for(source_key: str, source_prefix: str, dest_prefix: str) -> str:
