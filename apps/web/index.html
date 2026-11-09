@@ -644,6 +644,13 @@
               <input class="form-control" id="binding-retention-days-input" name="retention_days" type="number" min="1" step="1" placeholder="e.g. 30" />
             </div>
             <div class="col-12">
+              <div class="form-check border border-danger-subtle rounded p-3 ps-5">
+                <input class="form-check-input" id="binding-delete-extraneous-input" name="delete_extraneous" type="checkbox" />
+                <label class="form-check-label fw-semibold" for="binding-delete-extraneous-input">Delete destination objects missing from source</label>
+                <div class="form-text">When enabled, S3 sync permanently deletes objects under the destination prefix that are not present in the source. Leave unchecked to keep destination-only objects.</div>
+              </div>
+            </div>
+            <div class="col-12">
               <div class="border rounded p-3 bg-body-tertiary">
                 <div class="fw-semibold small mb-2">S3 sync performance</div>
                 <div class="row g-2">

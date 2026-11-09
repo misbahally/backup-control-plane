@@ -370,6 +370,12 @@ function getBindingPayloadFromForm() {
     delete policy.dest_prefix;
   }
 
+  if (f.get("delete_extraneous")) {
+    policy.delete = true;
+  } else {
+    delete policy.delete;
+  }
+
   const retentionDays = parsePositiveIntegerOrNull(f.get("retention_days"));
   if (retentionDays !== null) {
     policy.retention_days = retentionDays;
@@ -685,6 +691,7 @@ function resetBindingEditState() {
   form.reset();
   form.querySelector("[name='binding_preset']").value = "custom";
   form.querySelector("[name='compression_enabled']").value = "false";
+  form.querySelector("[name='delete_extraneous']").checked = false;
   document.getElementById("binding-submit-btn").textContent = "Create Binding";
   setDrawerTitle("binding-drawer-title", "New Binding");
 }
@@ -820,6 +827,7 @@ function startBindingEdit(binding) {
   form.querySelector("[name='binding_preset']").value = "custom";
   form.querySelector("[name='dest_prefix']").value = policy.dest_prefix || "";
   form.querySelector("[name='retention_days']").value = policy.retention_days || "";
+  form.querySelector("[name='delete_extraneous']").checked = Boolean(policy.delete);
   form.querySelector("[name='parallel_workers']").value = policy.parallel_workers || "";
   form.querySelector("[name='max_transfer_concurrency']").value = policy.max_transfer_concurrency || "";
   form.querySelector("[name='multipart_threshold_mb']").value = policy.multipart_threshold_mb || "";
